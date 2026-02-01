@@ -2,60 +2,6 @@
 
 A TypeScript/Node.js implementation of a double-entry accounting ledger system with a clean hexagonal architecture.
 
-## 🏗️ Architecture
-
-This project follows **Hexagonal Architecture** (Ports & Adapters) principles with clear separation of concerns:
-
-```
-src/
-├── domain/                    # Core business logic (no dependencies)
-│   ├── models/               # Domain entities
-│   │   ├── Account.ts        # Account aggregate root
-│   │   ├── Entry.ts          # Entry value object
-│   │   ├── Transaction.ts    # Transaction aggregate root
-│   │   ├── AccountCommand.ts # Command for account creation
-│   │   └── TransactionCommand.ts # Command for transaction creation
-│   ├── repositories/         # Repository interfaces (ports)
-│   │   ├── AccountRepository.ts
-│   │   └── TransactionRepository.ts
-│   └── services/             # Domain services
-│       ├── AccountService.ts # Account domain logic
-│       └── LedgerService.ts  # Transaction processing logic
-│
-├── application/              # Application layer (use cases)
-│   ├── use-cases/           # Application services
-│   │   ├── CreateAccountUseCase.ts
-│   │   ├── GetAccountUseCase.ts
-│   │   └── CreateTransactionUseCase.ts
-│   ├── request/             # Input DTOs
-│   │   ├── Direction.ts
-│   │   ├── CreateAccountRequest.ts
-│   │   └── CreateTransactionRequest.ts
-│   └── response/            # Output DTOs
-│       ├── CreateAccountResponse.ts
-│       └── CreateTransactionResponse.ts
-│
-└── infrastructure/           # External adapters
-    ├── repositories/        # Repository implementations
-    │   ├── InMemoryAccountRepository.ts
-    │   └── InMemoryTransactionRepository.ts
-    └── http/                # HTTP adapter
-        ├── controllers/     # Request handlers
-        │   ├── AccountController.ts
-        │   └── TransactionController.ts
-        └── routes/          # Route definitions
-            ├── AccountRoutes.ts
-            └── TransactionRoutes.ts
-```
-
-### Key Design Decisions
-
-1. **Hexagonal Architecture**: Domain logic is isolated from infrastructure concerns
-2. **Command Pattern**: Input validation happens in command objects before domain logic
-3. **Immutability**: Domain models use getters and return copies to prevent external mutations
-4. **Atomic Updates**: Transaction entries are applied to accounts atomically using repository locks
-5. **Request/Response DTOs**: Clear separation between HTTP contracts and domain models
-
 ## 📋 Requirements
 
 - Node.js >= 18.x
@@ -94,12 +40,6 @@ The server will start on `http://localhost:5000`
 ```bash
 # Run all tests
 npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
 ```
 
 ## 📚 API Documentation
@@ -130,7 +70,6 @@ curl --request POST \
 ```
 
 **Fields:**
-- `id` (optional): Account ID (auto-generated if not provided)
 - `name` (optional): Account name/label
 - `direction` (required): Either "debit" or "credit"
 - `balance` (read-only): Current account balance in USD
@@ -169,12 +108,12 @@ curl --request POST \
        "entries": [
          {
            "direction": "debit",
-           "account_id": "fa967ec9-5be2-4c26-a874-7eeeabfc6da8",
+           "account_id": "eb45b12f-13f1-4b56-9208-59f571d14fcd",
            "amount": 100
          },
          {
            "direction": "credit",
-           "account_id": "dbf17d00-8701-4c4e-9fc5-6ae33c324309",
+           "account_id": "0b5acce8-3d40-4874-a8b7-e48ad6638de6",
            "amount": 100
          }
        ]
@@ -204,7 +143,6 @@ curl --request POST \
 ```
 
 **Fields:**
-- `id` (optional): Transaction ID (auto-generated if not provided)
 - `name` (optional): Transaction name/label
 - `entries` (required): Array of ledger entries
     - `direction` (required): Either "debit" or "credit"
@@ -249,42 +187,6 @@ When applying an entry to an account:
 | credit           | credit          | +amount           |
 | credit           | debit           | -amount           |
 
-## 🧪 Testing Strategy
-
-The project includes comprehensive tests at multiple levels:
-
-1. **Unit Tests**: Test domain models in isolation
-    - Account balance updates
-    - Transaction validation
-    - Entry creation
-
-2. **Integration Tests**: Test repository implementations
-    - Data persistence
-    - Concurrent updates
-    - Lock mechanisms
-
-3. **E2E Tests**: Test complete workflows
-    - Account creation and retrieval
-    - Transaction processing
-    - Balance updates
-    - Error handling
-
-## 🔒 Concurrency Control
-
-The `InMemoryAccountRepository` implements a locking mechanism to prevent race conditions:
-
-```typescript
-// Atomic update of multiple accounts
-await accountRepository.updateMultiple([
-  { accountId: 'account-1', updateFn: (acc) => acc.applyEntry('debit', 100) },
-  { accountId: 'account-2', updateFn: (acc) => acc.applyEntry('credit', 100) }
-]);
-```
-
-- Locks are acquired in sorted order to prevent deadlocks
-- All updates succeed or all fail (transaction semantics)
-- Snapshots ensure consistency on errors
-
 ## 🎯 Example Usage
 
 ### Complete Business Scenario
@@ -320,42 +222,10 @@ curl http://localhost:5000/accounts/revenue-id
 # Response: {"balance": 500, ...}
 ```
 
-## 🛠️ Technologies
+### Considerations
 
-- **TypeScript**: Type-safe application code
-- **Express**: HTTP server framework
-- **UUID**: Unique identifier generation
-- **Jest**: Testing framework
-- **Supertest**: HTTP integration testing
-
-## 📝 Design Patterns Used
-
-1. **Hexagonal Architecture**: Clear separation of domain, application, and infrastructure
-2. **Command Pattern**: Input validation via command objects
-3. **Repository Pattern**: Abstract data access
-4. **Use Case Pattern**: Application-specific business rules
-5. **Factory Pattern**: Domain object creation
-6. **Value Object**: Immutable Entry objects
-
-## 🔮 Future Enhancements
-
-- [ ] Add transaction reversal functionality
-- [ ] Implement audit trail
-- [ ] Add pagination for account/transaction listings
-- [ ] Support for different currencies
-- [ ] Transaction filtering and search
-- [ ] Database persistence (PostgreSQL)
-- [ ] GraphQL API
-- [ ] Event sourcing for complete audit history
-
-## 📄 License
-
-MIT
-
-## 👤 Author
-
-João Fonseca
-
----
-
-**Note**: This is a take-home exercise demonstrating clean architecture, domain-driven design, and professional TypeScript development practices.
+- Decided not to allow client to specify the account id to achieve id consistency;
+- Allowing the client to specific the name field already gives them personalization feature;
+- Tests coverage is not at production level. Future enhancements would include unit and integration tests.
+- Decided to use generic exceptions with dedicated messages instead of custom exceptions for better error handling. Future enhancements would include dedicated custom exceptions.
+- Decided to follow hexagonal architecture give that this represents a financial application that requires clear layer isolation to achieve a better long-term maintenance.

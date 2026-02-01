@@ -55,12 +55,4 @@ export class Container {
   getTransactionController(): TransactionController {
     return this.transactionController;
   }
-
-  getAccountRepository(): InMemoryAccountRepository {
-    return this.accountRepository;
-  }
-
-  getTransactionRepository(): InMemoryTransactionRepository {
-    return this.transactionRepository;
-  }
 }
