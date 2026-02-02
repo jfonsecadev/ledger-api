@@ -229,3 +229,4 @@ curl http://localhost:5000/accounts/revenue-id
 - Tests coverage is not at production level. Future enhancements would include unit and integration tests.
 - Decided to use generic exceptions with dedicated messages instead of custom exceptions for better error handling. Future enhancements would include dedicated custom exceptions.
 - Decided to follow hexagonal architecture give that this represents a financial application that requires clear layer isolation to achieve a better long-term maintenance.
+- Decided not to implement idempotency in /transaction endpoint 
